@@ -1,22 +1,22 @@
 import Foundation
 
-public struct FIFOQueue<Element> {
+class Node<T> {
+    let content: T?
+    var next: Node?
+    var previous: Node?
     
-    class Node {
-        let content: Element
-        var next: Node?
-        var previous: Node?
-        
-        init(content: Element) {
-            self.content = content
-            self.next = nil
-            self.previous = nil
-        }
+    init(content: T? = nil) {
+        self.content = content
+        self.next = nil
+        self.previous = nil
     }
+}
+
+public final class FIFOQueue<Element> {
     
-    private var first: Node?
+    private var first: Node<Element>?
     
-    private var last: Node?
+    private var last: Node<Element>?
     
     public let maxCapacity: Int
     
@@ -33,7 +33,7 @@ public struct FIFOQueue<Element> {
     ///
     /// If the `enqueue` causes it to exceed the maximum capacity, it's returned the element that enqueued very first.
     @discardableResult
-    public mutating func enqueue(_ element: Element) -> Element? {
+    public func enqueue(_ element: Element) -> Element? {
         lock.lock(); defer { lock.unlock() }
         
         let node = Node(content: element)
@@ -56,7 +56,7 @@ public struct FIFOQueue<Element> {
     
     /// Returns very first enqueuing element.
     @discardableResult
-    public mutating func dequeue() -> Element? {
+    public func dequeue() -> Element? {
         lock.lock(); defer { lock.unlock() }
         
         guard let last else {
@@ -76,5 +76,32 @@ public struct FIFOQueue<Element> {
         }
         
         return content
+    }
+}
+
+extension FIFOQueue: Sequence {
+    
+    public struct Iterator: IteratorProtocol {
+        private var queue: FIFOQueue<Element>
+        private var times = 0
+        private var iteratingNode: Node<Element>?
+        
+        init(_ queue: FIFOQueue<Element>) {
+            self.queue = queue
+            let iteratingNode = Node<Element>()
+            iteratingNode.next = queue.first
+            self.iteratingNode = iteratingNode
+        }
+        
+        public mutating func next() -> Element? {
+            guard times < queue.count else { return nil }
+            times += 1
+            iteratingNode = iteratingNode?.next
+            return iteratingNode?.content
+        }
+    }
+    
+    public func makeIterator() -> Iterator {
+        Iterator(self)
     }
 }

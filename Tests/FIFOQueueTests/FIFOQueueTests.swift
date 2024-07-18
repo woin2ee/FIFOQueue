@@ -4,13 +4,13 @@ import XCTest
 final class FIFOQueueTests: XCTestCase {
     
     func test_enqueue_dequeue() {
-        var queue = FIFOQueue<Int>(maxCapacity: 10)
+        let queue = FIFOQueue<Int>(maxCapacity: 10)
         queue.enqueue(1)
         XCTAssertEqual(queue.dequeue(), 1)
     }
     
     func test_enqueue_whenOverCapacity() {
-        var queue = FIFOQueue<Int>(maxCapacity: 3)
+        let queue = FIFOQueue<Int>(maxCapacity: 3)
         queue.enqueue(1)
         queue.enqueue(2)
         queue.enqueue(3)
@@ -20,7 +20,7 @@ final class FIFOQueueTests: XCTestCase {
     
     func test_count() {
         // Given
-        var queue = FIFOQueue<Int>(maxCapacity: .max)
+        let queue = FIFOQueue<Int>(maxCapacity: .max)
         
         // When
         queue.enqueue(1)
@@ -33,7 +33,7 @@ final class FIFOQueueTests: XCTestCase {
     
     func test_count_whenComplexEnAndDequeue() {
         // Given
-        var queue = FIFOQueue<Int>(maxCapacity: .max)
+        let queue = FIFOQueue<Int>(maxCapacity: .max)
         
         // When
         queue.dequeue()
@@ -52,7 +52,7 @@ final class FIFOQueueTests: XCTestCase {
     
     func test_count_whenOverMaxCapacity() {
         // Given
-        var queue = FIFOQueue<Int>(maxCapacity: 3)
+        let queue = FIFOQueue<Int>(maxCapacity: 3)
         
         // When
         queue.enqueue(1)
@@ -66,7 +66,7 @@ final class FIFOQueueTests: XCTestCase {
     
     func test_lock_withMultiThreading() {
         // Given
-        var queue = FIFOQueue<Int>(maxCapacity: .max)
+        let queue = FIFOQueue<Int>(maxCapacity: .max)
         
         let expectation = expectation(description: "Enqueue done.")
         expectation.expectedFulfillmentCount = 20_000
@@ -93,7 +93,7 @@ final class FIFOQueueTests: XCTestCase {
     
     func test_recursiveLock_whenOverCapacity_withMultiThreading() {
         // Given
-        var queue = FIFOQueue<Int>(maxCapacity: 100)
+        let queue = FIFOQueue<Int>(maxCapacity: 100)
         var overElements: [Int] = []
         let lock = NSLock()
         
@@ -129,5 +129,30 @@ final class FIFOQueueTests: XCTestCase {
         wait(for: [expectation], timeout: 5)
         XCTAssertEqual(queue.count, 100)
         XCTAssertEqual(overElements.count, 19_900)
+    }
+    
+    func test_iterating() {
+        // Given
+        let queue = FIFOQueue<Node>(maxCapacity: 10)
+        (1...10).forEach { _ in
+            queue.enqueue(Node(content: 1))
+        }
+        
+        // When
+        queue.forEach { node in
+            node.content += 1
+        }
+        
+        // Then
+        (1...10).forEach { _ in
+            XCTAssertEqual(queue.dequeue()?.content, 2)
+        }
+    }
+}
+
+fileprivate class Node {
+    var content: Int
+    init(content: Int) {
+        self.content = content
     }
 }
